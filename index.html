@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html>
+	    <!--<meta name="viewport" content="initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />-->
+
+
+	<head>
+		<meta charset="UTF-8">
+		<title></title>
+		<style type="text/css">
+		*{
+			padding: 0px;
+			margin: 0px;
+		}
+			#wrap {
+				width: 400px;
+				height: 400px;
+				border: 1px solid black;
+			}
+
+			.mindiv {
+				width: 20px;
+				height: 20px;
+				background-color: yellow;
+				border: 1px solid lightgrey;
+				float: left;
+				box-sizing: border-box;
+			}
+
+			.red {
+				background-color: red;
+			}
+			.green{
+				background-color: green;
+			}
+		</style>
+	</head>
+
+	<body>
+		<div id="wrap"></div>
+	</body>
+	<script type="text/javascript">
+	//食物坐标
+	var fooX = null;
+	var fooY = null;
+		var wrap = document.getElementById("wrap");
+		var rowNumber = 20;
+		var collNumber = 20;
+		//存放所有div的二维数组
+		//存放的小数组
+		//每一个数组里面装的是
+		//一行中所有的div
+		var allDiv = [];
+		var snakeLength = 3; //🐍的长度
+		var snakeArray = [] //用来装整条🐍
+		//控制整个游戏的定时器
+		var timer = null;
+		var snakeHeader = snakeLength - 1; //🐍头
+		var direction = "right";
+		var x = 0; //默认舌头的所在行
+		//		创建游戏面板
+		//		创建二维数组
+		createMapAndArray();
+
+		function createMapAndArray() {
+			//外层for控制行
+			//内行for控制列
+			for (var i = 0; i < rowNumber; i++) {
+				var rowArray = [];
+				//每一次开始创建行的时候，准备一个rowArray 用来装这一行的所有div
+				for (var j = 0; j < collNumber; j++) {
+					var minDiv = document.createElement("div");
+					wrap.appendChild(minDiv);
+					minDiv.className = "mindiv";
+					rowArray.push(minDiv);
+				}
+				allDiv.push(rowArray);
+			} //for结束
+		}
+		//让🐍在面板上展示出来
+		showoMySnake();
+
+		function showoMySnake() {
+			for (var i = 0; i < snakeLength; i++) {
+				allDiv[0][i].className = "mindiv red";
+				snakeArray[i] = allDiv[0][i];
+			}
+		}
+		gameStart();
+		//游戏结束的方法
+		function gameOver() {
+			console.log("游戏结束");
+			clearTimeout(timer);
+		}
+		//是否碰到自己的方法
+		function checkMe(tou){
+			for(var i =0;i<snakeArray.length;i++){
+				if(snakeArray[i]==tou){
+					return true;
+				}
+			}
+			return false;
+		}
+		//🐍尾巴消失的方法
+		function tailHide() {
+			console.log("尾巴消失");
+			snakeArray[0].className = "mindiv";
+		}
+		//有没有吃到食物的方法
+		function isAteFood() {
+			var nextPointX = x;
+			var nextPointY=snakeHeader;
+		   if(direction=="top"){
+		   	nextPointX--;
+		   }if(direction=="bottom"){
+		   	nextPointX++;
+		   }
+		   if(direction=="left"){
+		   	nextPointY--;
+		   }if(direction=="right"){
+            	nextPointY++;
+		   }
+		   if(nextPointX==fooX&&nextPointY==fooY){
+		   	return true;
+		   }
+		   else{
+		   	return false;
+		   }
+
+		}
+		//移动的方法
+		function move() {
+			for (var i = 0; i < snakeArray.length; i++) {
+				snakeArray[i] = snakeArray[i + 1];
+			}
+		}
+//食物是否出现在🐍身上
+		function isOnSnake() {
+			if(allDiv[fooX][fooY].className=="mindiv red"){
+				return true;
+			}else{
+				return false;
+			}
+
+		}
+		//创建食物
+		createFood();
+
+		function createFood() {
+			 fooX = parseInt(Math.random() * collNumber);
+			 fooY = parseInt(Math.random() * rowNumber);
+			if (isOnSnake()) {
+				createFood();
+			} else {
+				allDiv[fooX][fooY].className = "mindiv green";
+			}
+		}
+		//键盘点击事件
+		document.onkeydown = function(event) {
+
+			//排除相反方向
+
+			switch (event.keyCode) {
+				case 37:
+				if(direction=="right"){
+					direction = "right";
+				}else{
+					direction = "left";
+				}
+					break;
+				case 38:
+				if(direction=="bottom"){
+					direction = "bottom";
+				}else{
+					direction = "top";
+				}
+
+					break;
+				case 39:
+				if(direction=="left"){
+					direction = "left";
+				}else{
+					direction = "right";
+				}
+
+					break;
+				case 40:
+				if(direction=="top"){
+					direction = "top";
+				}else{
+					direction = "bottom";
+				}
+					break;
+				default:
+					break;
+			}
+		}
+		//头显示
+		function headShow() {
+			snakeArray[snakeArray.length - 1].className = "mindiv red";
+		}
+
+		function gameStart() {
+			//		🐍要向某一个方向移动
+			switch (direction) {
+				case "left":
+				//有没有碰到墙壁
+					if (snakeHeader<= 0) {
+						gameOver();
+
+						break;
+					}
+					var tou = allDiv[x][snakeHeader - 1];
+					//有没有碰到自己的身体
+					if (checkMe(tou)) {
+						gameOver();
+						break;
+					}
+					tailHide();
+					//有没有吃到食物
+					if (isAteFood()) {
+						//吃到食物
+						snakeArray.push(allDiv[fooX][fooY]);
+						snakeLength++;
+						createFood();
+					} else {
+						//没有吃到食物
+						//正常移动
+						move();
+						snakeArray[snakeArray.length - 1] = allDiv[x][snakeHeader - 1];
+					}
+					//头显示
+					headShow();
+					snakeHeader--;
+					timer = setTimeout(gameStart, 200);
+					break;
+				case "right":
+					//有没有碰到墙壁
+					if (snakeHeader + 1 >= collNumber) {
+						gameOver();
+						break;
+					}
+					var tou = allDiv[x][snakeHeader + 1];
+					//有没有碰到自己的身体
+					if (checkMe()) {
+						gameOver();
+						break;
+					}
+					tailHide();
+					//有没有吃到食物
+					if (isAteFood()) {
+						//吃到食物
+						snakeArray.push(allDiv[fooX][fooY]);
+						snakeLength++;
+						createFood();
+					} else {
+						//没有吃到食物
+						//正常移动
+						move();
+						snakeArray[snakeArray.length - 1] = allDiv[x][snakeHeader + 1];
+					}
+					//头显示
+					headShow();
+					snakeHeader++;
+					timer = setTimeout(gameStart, 200);
+					break;
+				case "top":
+					//有没有碰到墙壁
+					if (x <= 0) {
+						gameOver();
+						break;
+					}
+					var tou = allDiv[x-1][snakeHeader];
+					//有没有碰到自己的身体
+					if (checkMe()) {
+						gameOver();
+						break;
+					}
+					tailHide();
+					//有没有吃到食物
+//					舌头的下一个坐标是不是等于[fooX][fooY]
+					if (isAteFood()) {
+						//吃到食物
+						snakeArray.push(allDiv[fooX][fooY]);
+						snakeLength++;
+						createFood();
+					} else {
+						//没有吃到食物
+						//正常移动
+						move();
+						snakeArray[snakeArray.length - 1] = allDiv[x-1][snakeHeader];
+					}
+					//头显示
+					headShow();
+					x--;
+					timer = setTimeout(gameStart, 200);
+					break;
+				case "bottom":
+					//有没有碰到墙壁
+					if (x + 1 >= rowNumber) {
+						gameOver();
+						break;
+					}
+					var tou = allDiv[x+1][snakeHeader];
+					//有没有碰到自己的身体
+					if (checkMe()) {
+						gameOver();
+						break;
+					}
+					tailHide();
+					//有没有吃到食物
+					if (isAteFood()) {
+						//吃到食物
+						snakeArray.push(allDiv[fooX][fooY]);
+						snakeLength++;
+						createFood();
+					} else {
+						//没有吃到食物
+						//正常移动
+						move();
+						snakeArray[snakeArray.length - 1] = allDiv[x+1][snakeHeader];
+					}
+					//头显示
+					headShow();
+					x++;
+					timer = setTimeout(gameStart, 200);
+					break;
+				default:
+					break;
+			}
+		}
+	</script>
+
+</html>
